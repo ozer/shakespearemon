@@ -1,15 +1,13 @@
 use surf::{get, StatusCode};
-use std::error::Error;
-use std::borrow::Borrow;
-use thiserror::Error;
+use derive_more::{Display, Error};
 
 use crate::poke::pokemon::Pokemon;
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Debug, Display, Error, PartialEq)]
 pub enum PokeClientError {
-    #[error("Pokemon named: `{0}` is not found")]
-    PokemonNotFound(String),
-    #[error("PokeClient went terribly wrong...")]
+    #[display(fmt = "Pokemon is not found")]
+    PokemonNotFound,
+    #[display(fmt = "PokeClient went terribly wrong...")]
     PokeClientFailed,
 }
 
@@ -28,7 +26,7 @@ pub async fn get_pokemon(base_url: &str, name: &str) -> Result<String, PokeClien
     if res.status() == StatusCode::Ok {
         Ok(name.to_owned())
     } else {
-        Err(PokeClientError::PokemonNotFound(name.to_owned()))
+        Err(PokeClientError::PokemonNotFound)
     }
 }
 
@@ -53,7 +51,7 @@ mod tests {
         let pokemon_name = "ozer";
 
         get_pokemon(&mock_server.uri(), pokemon_name).await.map_err(|error| {
-            assert_eq!(error, PokeClientError::PokemonNotFound(pokemon_name.to_owned()))
+            assert_eq!(error, PokeClientError::PokemonNotFound)
         });
     }
 

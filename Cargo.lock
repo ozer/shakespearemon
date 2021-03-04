@@ -2165,8 +2165,8 @@ name = "shakespearemon"
 version = "0.1.0"
 dependencies = [
  "actix-web",
- "anyhow",
  "async-std",
+ "derive_more",
  "serde",
  "serde_json",
  "surf",
