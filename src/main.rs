@@ -1,12 +1,11 @@
-use actix_web::{get, web, App, HttpServer, Responder, error, HttpResponse};
+use actix_web::{get, web, App, HttpServer, error, HttpResponse};
 use actix_web::dev::HttpResponseBuilder;
 use actix_web::http::{header, StatusCode};
 use derive_more::{Display, Error};
 use serde::{Serialize, Deserialize};
 
 use crate::poke::poke_client::PokeClientError;
-use crate::shakespeare::shakespeare_client::{ShakespeareClientError, ShakespeareTranslation};
-use std::convert::TryInto;
+use crate::shakespeare::shakespeare_client::{ShakespeareClientError};
 
 mod poke;
 mod shakespeare;
@@ -24,7 +23,9 @@ impl error::ResponseError for ShakespearemonException {
     fn status_code(&self) -> StatusCode {
         match *self {
             ShakespearemonException::PokeClientException(PokeClientError::PokeClientFailed) => StatusCode::INTERNAL_SERVER_ERROR,
-            _ => StatusCode::BAD_REQUEST
+            ShakespearemonException::PokeClientException(PokeClientError::PokemonNotFound) => StatusCode::BAD_REQUEST,
+            ShakespearemonException::ShakespeareClientException(ShakespeareClientError::TranslationNotFound) => StatusCode::BAD_REQUEST,
+            ShakespearemonException::ShakespeareClientException(ShakespeareClientError::ShakespeareClientFailed) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 
@@ -42,7 +43,7 @@ pub struct ShakespearemonResponse {
 }
 
 #[get("/pokemon/{name}")]
-async fn translation_pokemon_shakespearen(web::Path((name)): web::Path<(String)>) -> Result<HttpResponse, ShakespearemonException> {
+async fn translation_pokemon_shakespearen(web::Path(name): web::Path<String>) -> Result<HttpResponse, ShakespearemonException> {
     poke::poke_client::get_pokemon(POKE_API_BASE_URL, &name).await
         .map_err(|error| {
             ShakespearemonException::PokeClientException(error)

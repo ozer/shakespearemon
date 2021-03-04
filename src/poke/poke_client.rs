@@ -1,8 +1,6 @@
 use surf::{get, StatusCode};
 use derive_more::{Display, Error};
 
-use crate::poke::pokemon::Pokemon;
-
 #[derive(Debug, Display, Error, PartialEq)]
 pub enum PokeClientError {
     #[display(fmt = "Pokemon is not found")]
@@ -16,12 +14,9 @@ pub async fn get_pokemon(base_url: &str, name: &str) -> Result<String, PokeClien
     url.push_str("/");
     url.push_str(name);
 
-    let mut res = get(url).await.map_err(|error| {
-        println!("[Fetch Pokemon]: what is this error here? {:?}", error);
+    let res = get(url).await.map_err(|_| {
         PokeClientError::PokeClientFailed
     })?;
-
-    println!("what is the status code? {:?}", res.status());
 
     if res.status() == StatusCode::Ok {
         Ok(name.to_owned())
@@ -36,9 +31,9 @@ mod tests {
     use super::*;
     use wiremock::{MockServer, Mock, ResponseTemplate};
     use wiremock::matchers::{method, path, path_regex};
-    use actix_web::error::ParseError::Status;
 
     #[async_std::test]
+    #[allow(unused_must_use)]
     async fn throw_pokemon_not_found_error() {
         let mock_server = MockServer::start().await;
 
