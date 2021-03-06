@@ -1,9 +1,10 @@
 use surf::{get, StatusCode};
 use derive_more::{Display, Error};
+use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Display, Error, PartialEq)]
+#[derive(Debug, Display, Error, PartialEq, Serialize, Deserialize)]
 pub enum PokeClientError {
-    #[display(fmt = "Pokemon is not found")]
+    #[display(fmt = "PokemonNotFound")]
     PokemonNotFound,
     #[display(fmt = "PokeClient went terribly wrong...")]
     PokeClientFailed,

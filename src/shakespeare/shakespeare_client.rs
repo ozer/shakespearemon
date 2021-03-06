@@ -2,7 +2,7 @@ use surf::{post, StatusCode};
 use derive_more::{Display, Error};
 use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Display, Error, PartialEq)]
+#[derive(Debug, Display, Error, PartialEq, Serialize, Deserialize)]
 pub enum ShakespeareClientError {
     #[display(fmt = "Translation not found")]
     TranslationNotFound,
