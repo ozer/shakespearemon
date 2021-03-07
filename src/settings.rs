@@ -5,6 +5,8 @@ use config::{Config, ConfigError, File};
 pub struct Application {
     pub host: String,
     pub port: u16,
+    pub poke_api_base_url: String,
+    pub shakespeare_translator_api_base_url: String
 }
 
 #[derive(Debug, Deserialize)]

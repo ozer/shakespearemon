@@ -6,7 +6,7 @@ use serde::{Serialize, Deserialize};
 pub enum ShakespeareClientError {
     #[display(fmt = "Translation not found")]
     TranslationNotFound,
-    #[display(fmt = "ShakespeareClient went terribly wrong...")]
+    #[display(fmt = "Unable to process the request")]
     ShakespeareClientFailed,
 }
 
@@ -70,8 +70,7 @@ pub async fn get_shakespearean_translation(url: &str, text: &str) -> Result<Stri
                 ShakespeareClientError::TranslationNotFound
             })?;
             Ok(translation.contents.translated)
-        }
-        StatusCode::BadRequest |
+        },
         StatusCode::NotFound => {
             Err(ShakespeareClientError::TranslationNotFound)
         }

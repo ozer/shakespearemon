@@ -6,7 +6,7 @@ use derive_more::{Display, Error};
 use serde::{Serialize, Deserialize};
 use std::io::{Error, ErrorKind};
 
-use crate::poke::poke_client::PokeClientError;
+use crate::poke::poke_client::PokeClientException;
 use crate::shakespeare::shakespeare_client::ShakespeareClientError;
 use crate::settings::Settings;
 
@@ -19,15 +19,15 @@ static SHAKESPEARE_TRANSLATOR_BASE_URL: &str = "https://api.funtranslations.com/
 
 #[derive(Debug, Display, Error, Serialize, Deserialize)]
 pub enum ShakespearemonException {
-    PokeClientException(PokeClientError),
+    PokeClientException(PokeClientException),
     ShakespeareClientException(ShakespeareClientError),
 }
 
 impl error::ResponseError for ShakespearemonException {
     fn status_code(&self) -> StatusCode {
         match *self {
-            ShakespearemonException::PokeClientException(PokeClientError::PokeClientFailed) => StatusCode::INTERNAL_SERVER_ERROR,
-            ShakespearemonException::PokeClientException(PokeClientError::PokemonNotFound) => StatusCode::NOT_FOUND,
+            ShakespearemonException::PokeClientException(PokeClientException::PokeClientFailed) => StatusCode::INTERNAL_SERVER_ERROR,
+            ShakespearemonException::PokeClientException(PokeClientException::PokemonNotFound) => StatusCode::NOT_FOUND,
             ShakespearemonException::ShakespeareClientException(ShakespeareClientError::TranslationNotFound) => StatusCode::NOT_FOUND,
             ShakespearemonException::ShakespeareClientException(ShakespeareClientError::ShakespeareClientFailed) => StatusCode::INTERNAL_SERVER_ERROR,
         }
@@ -47,13 +47,13 @@ pub struct ShakespearemonResponse {
 }
 
 #[get("/pokemon/{name}")]
-async fn translation_pokemon_shakespearen(web::Path(name): web::Path<String>) -> Result<HttpResponse, ShakespearemonException> {
-    poke::poke_client::get_pokemon(POKE_API_BASE_URL, &name).await
+async fn translation_pokemon_shakespearen(data: web::Data<Settings>, web::Path(name): web::Path<String>) -> Result<HttpResponse, ShakespearemonException> {
+    poke::poke_client::get_pokemon(&data.application.poke_api_base_url, &name).await
         .map_err(|error| {
             ShakespearemonException::PokeClientException(error)
         })?;
 
-    let translation = shakespeare::shakespeare_client::get_shakespearean_translation(SHAKESPEARE_TRANSLATOR_BASE_URL, &name).await
+    let translation = shakespeare::shakespeare_client::get_shakespearean_translation(&data.application.shakespeare_translator_api_base_url, &name).await
         .map_err(|error| {
             ShakespearemonException::ShakespeareClientException(error)
         })?;
@@ -74,7 +74,9 @@ async fn main() -> std::io::Result<()> {
 
     let addr = format!("{}:{}", settings.application.host, settings.application.port);
 
-    HttpServer::new(|| App::new().wrap(Logger::default()).service(translation_pokemon_shakespearen))
+    HttpServer::new(|| App::new()
+        .data(Settings::new().expect("Config failed!"))
+        .wrap(Logger::default()).service(translation_pokemon_shakespearen))
         .bind(addr)?
         .run()
         .await
@@ -86,10 +88,34 @@ mod tests {
     use actix_web::{test};
     use actix_web::http::StatusCode;
     use actix_web::test::{read_body_json};
+    use crate::settings::Application;
+    use wiremock::{MockServer, Mock, ResponseTemplate};
+    use wiremock::matchers::{method, path};
+    use surf::{StatusCode as SurfStatusCode};
 
     #[actix_rt::test]
     async fn returns_pokemon_named_ozer_not_found() {
-        let mut app = test::init_service(App::new().service(translation_pokemon_shakespearen)).await;
+        let mock_server = MockServer::start().await;
+
+        let application = Application {
+            host: "127.0.0.1".to_owned(),
+            port: 8080,
+            poke_api_base_url: mock_server.uri(),
+            shakespeare_translator_api_base_url: mock_server.uri()
+        };
+
+        Mock::given(method("GET"))
+            .and(path("/ozer"))
+            .respond_with(ResponseTemplate::new(SurfStatusCode::NotFound))
+            .mount(&mock_server)
+            .await;
+
+        let mut app = test::init_service(App::new()
+            .data(Settings {
+                application
+            })
+            .service(translation_pokemon_shakespearen)).await;
+
         let req = test::TestRequest::get()
             .uri("/pokemon/ozer").to_request();
 
@@ -99,6 +125,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn translates_pokemon_to_shakespaearen() {
+
         let mut app = test::init_service(App::new().service(translation_pokemon_shakespearen)).await;
         let req = test::TestRequest::get()
             .uri("/pokemon/pikachu").to_request();

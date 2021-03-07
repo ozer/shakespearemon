@@ -3,26 +3,32 @@ use derive_more::{Display, Error};
 use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Display, Error, PartialEq, Serialize, Deserialize)]
-pub enum PokeClientError {
-    #[display(fmt = "PokemonNotFound")]
+pub enum PokeClientException {
+    #[display(fmt = "Pokemon Not Found")]
     PokemonNotFound,
-    #[display(fmt = "PokeClient went terribly wrong...")]
+    #[display(fmt = "Unable to process the request")]
     PokeClientFailed,
 }
 
-pub async fn get_pokemon(base_url: &str, name: &str) -> Result<String, PokeClientError> {
+pub async fn get_pokemon(base_url: &str, name: &str) -> Result<String, PokeClientException> {
     let mut url = base_url.to_owned();
     url.push_str("/");
     url.push_str(name);
 
     let res = get(url).await.map_err(|_| {
-        PokeClientError::PokeClientFailed
+        PokeClientException::PokeClientFailed
     })?;
 
-    if res.status() == StatusCode::Ok {
-        Ok(name.to_owned())
-    } else {
-        Err(PokeClientError::PokemonNotFound)
+    match res.status() {
+        StatusCode::Ok => {
+            Ok(name.to_owned())
+        }
+        StatusCode::NotFound => {
+            Err(PokeClientException::PokemonNotFound)
+        }
+        _ => {
+            Err(PokeClientException::PokeClientFailed)
+        }
     }
 }
 
@@ -47,7 +53,25 @@ mod tests {
         let pokemon_name = "ozer";
 
         get_pokemon(&mock_server.uri(), pokemon_name).await.map_err(|error| {
-            assert_eq!(error, PokeClientError::PokemonNotFound)
+            assert_eq!(error, PokeClientException::PokemonNotFound)
+        });
+    }
+
+    #[actix_rt::test]
+    #[allow(unused_must_use)]
+    async fn should_throw_poke_client_failed_if_request_returns_too_many_requests() {
+        let mock_server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(path("ozer"))
+            .respond_with(ResponseTemplate::new(StatusCode::Ok))
+            .mount(&mock_server)
+            .await;
+
+        let pokemon = "ozer";
+
+        get_pokemon(&mock_server.uri(), pokemon).await.map_err(|error| {
+            assert_eq!(error, PokeClientException::PokeClientFailed)
         });
     }
 
