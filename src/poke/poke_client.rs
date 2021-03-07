@@ -33,7 +33,7 @@ mod tests {
     use wiremock::{MockServer, Mock, ResponseTemplate};
     use wiremock::matchers::{method, path, path_regex};
 
-    #[async_std::test]
+    #[actix_rt::test]
     #[allow(unused_must_use)]
     async fn throw_pokemon_not_found_error() {
         let mock_server = MockServer::start().await;
@@ -51,7 +51,7 @@ mod tests {
         });
     }
 
-    #[async_std::test]
+    #[actix_rt::test]
     async fn returns_pokemon_name() {
         let mock_server = MockServer::start().await;
 

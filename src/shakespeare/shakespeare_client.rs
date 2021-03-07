@@ -86,7 +86,7 @@ mod tests {
     use wiremock::{MockServer, Mock, ResponseTemplate};
     use wiremock::matchers::{method, path, path_regex};
 
-    #[async_std::test]
+    #[actix_rt::test]
     #[allow(unused_must_use)]
     async fn should_throw_translation_not_found_error_if_request_returns_not_found() {
         let mock_server = MockServer::start().await;
@@ -103,7 +103,7 @@ mod tests {
         });
     }
 
-    #[async_std::test]
+    #[actix_rt::test]
     #[allow(unused_must_use)]
     async fn should_throw_shakespeare_client_failed_if_request_returns_too_many_requests() {
         let mock_server = MockServer::start().await;
@@ -120,7 +120,7 @@ mod tests {
         });
     }
 
-    #[async_std::test]
+    #[actix_rt::test]
     async fn should_return_translated_string() {
         let mock_server = MockServer::start().await;
 

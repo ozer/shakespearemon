@@ -87,7 +87,7 @@ mod tests {
     use actix_web::http::StatusCode;
     use actix_web::test::{read_body_json};
 
-    #[async_std::test]
+    #[actix_rt::test]
     async fn returns_pokemon_named_ozer_not_found() {
         let mut app = test::init_service(App::new().service(translation_pokemon_shakespearen)).await;
         let req = test::TestRequest::get()
@@ -97,7 +97,7 @@ mod tests {
         assert_eq!(resp.status(), StatusCode::NOT_FOUND);
     }
 
-    #[async_std::test]
+    #[actix_rt::test]
     async fn translates_pokemon_to_shakespaearen() {
         let mut app = test::init_service(App::new().service(translation_pokemon_shakespearen)).await;
         let req = test::TestRequest::get()

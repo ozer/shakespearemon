@@ -17,4 +17,4 @@ config = "0.10"
 
 [dev-dependencies]
 wiremock = "0.5"
-async-std = { version = "1.8.0", features = ["attributes"] }
+actix-rt = "2.1.0"
