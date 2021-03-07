@@ -1,14 +1,6 @@
 use surf::{get, StatusCode};
-use derive_more::{Display, Error};
-use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Display, Error, PartialEq, Serialize, Deserialize)]
-pub enum PokeClientException {
-    #[display(fmt = "Pokemon Not Found")]
-    PokemonNotFound,
-    #[display(fmt = "Unable to process the request")]
-    PokeClientFailed,
-}
+use crate::poke::poke_client_exception::PokeClientException;
 
 pub async fn get_pokemon(base_url: &str, name: &str) -> Result<String, PokeClientException> {
     let mut url = base_url.to_owned();
@@ -16,7 +8,7 @@ pub async fn get_pokemon(base_url: &str, name: &str) -> Result<String, PokeClien
     url.push_str(name);
 
     let res = get(url).await.map_err(|_| {
-        PokeClientException::PokeClientFailed
+        PokeClientException::PokeClientWentWrong
     })?;
 
     match res.status() {
@@ -27,7 +19,7 @@ pub async fn get_pokemon(base_url: &str, name: &str) -> Result<String, PokeClien
             Err(PokeClientException::PokemonNotFound)
         }
         _ => {
-            Err(PokeClientException::PokeClientFailed)
+            Err(PokeClientException::PokeClientWentWrong)
         }
     }
 }
@@ -71,7 +63,7 @@ mod tests {
         let pokemon = "ozer";
 
         get_pokemon(&mock_server.uri(), pokemon).await.map_err(|error| {
-            assert_eq!(error, PokeClientException::PokeClientFailed)
+            assert_eq!(error, PokeClientException::PokeClientWentWrong)
         });
     }
 

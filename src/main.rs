@@ -6,8 +6,9 @@ use derive_more::{Display, Error};
 use serde::{Serialize, Deserialize};
 use std::io::{Error, ErrorKind};
 
-use crate::poke::poke_client::PokeClientException;
-use crate::shakespeare::shakespeare_client::ShakespeareClientError;
+use crate::poke::poke_client_exception::PokeClientException;
+use crate::shakespeare::shakespeare_client_exception::ShakespeareClientException;
+
 use crate::settings::Settings;
 
 mod poke;
@@ -17,16 +18,16 @@ mod settings;
 #[derive(Debug, Display, Error, Serialize, Deserialize)]
 pub enum ShakespearemonException {
     PokeClientException(PokeClientException),
-    ShakespeareClientException(ShakespeareClientError),
+    ShakespeareClientException(ShakespeareClientException),
 }
 
 impl error::ResponseError for ShakespearemonException {
     fn status_code(&self) -> StatusCode {
         match *self {
-            ShakespearemonException::PokeClientException(PokeClientException::PokeClientFailed) => StatusCode::INTERNAL_SERVER_ERROR,
+            ShakespearemonException::PokeClientException(PokeClientException::PokeClientWentWrong) => StatusCode::INTERNAL_SERVER_ERROR,
             ShakespearemonException::PokeClientException(PokeClientException::PokemonNotFound) => StatusCode::NOT_FOUND,
-            ShakespearemonException::ShakespeareClientException(ShakespeareClientError::TranslationNotFound) => StatusCode::NOT_FOUND,
-            ShakespearemonException::ShakespeareClientException(ShakespeareClientError::ShakespeareClientFailed) => StatusCode::INTERNAL_SERVER_ERROR,
+            ShakespearemonException::ShakespeareClientException(ShakespeareClientException::TranslationNotFound) => StatusCode::NOT_FOUND,
+            ShakespearemonException::ShakespeareClientException(ShakespeareClientException::ShakespeareClientWentWrong) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 
@@ -90,7 +91,7 @@ mod tests {
     use wiremock::matchers::{method, path};
     use surf::{StatusCode as SurfStatusCode};
     use serde::Serialize;
-    use crate::shakespeare::shakespeare_client::ShakespeareTranslation;
+    use crate::shakespeare::shakespeare_translation_response::ShakespeareTranslationResponse;
 
     #[derive(Serialize)]
     struct UndefinedShakespeareTranslatorApiResponse {
@@ -98,7 +99,7 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn returns_404_pokemon_named_ozer_not_found() {
+    async fn returns_404_pokemon_named_not_found() {
         let mock_server = MockServer::start().await;
 
         let application = Application {
@@ -248,7 +249,7 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let translation = ShakespeareTranslation::new(String::from("translated"), String::from("text"), String::from("translation"));
+        let translation = ShakespeareTranslationResponse::new(String::from("translated"), String::from("text"), String::from("translation"));
 
         Mock::given(method("POST"))
             .respond_with(ResponseTemplate::new(SurfStatusCode::Ok).set_body_json(translation))
