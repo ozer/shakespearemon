@@ -4,12 +4,15 @@ use actix_web::http::{header, StatusCode};
 use actix_web::middleware::Logger;
 use derive_more::{Display, Error};
 use serde::{Serialize, Deserialize};
+use std::io::{Error, ErrorKind};
 
 use crate::poke::poke_client::PokeClientError;
-use crate::shakespeare::shakespeare_client::{ShakespeareClientError};
+use crate::shakespeare::shakespeare_client::ShakespeareClientError;
+use crate::settings::Settings;
 
 mod poke;
 mod shakespeare;
+mod settings;
 
 static POKE_API_BASE_URL: &str = "https://pokeapi.co/api/v2/pokemon";
 static SHAKESPEARE_TRANSLATOR_BASE_URL: &str = "https://api.funtranslations.com/translate/shakespeare.json";
@@ -65,8 +68,14 @@ async fn translation_pokemon_shakespearen(web::Path(name): web::Path<String>) ->
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    let settings = Settings::new().map_err(|error| {
+        Error::new(ErrorKind::Other, format!("Config failed with an error: {:?}", error))
+    })?;
+
+    let addr = format!("{}:{}", settings.application.host, settings.application.port);
+
     HttpServer::new(|| App::new().wrap(Logger::default()).service(translation_pokemon_shakespearen))
-        .bind("127.0.0.1:8080")?
+        .bind(addr)?
         .run()
         .await
 }
