@@ -45,4 +45,3 @@ It includes unit and integration tests using [wiremock-rs](https://github.com/Lu
 - Organizing the code better in modularized way.
 - Moving all the integration tests in `main.src` into `tests` folder, as it is too hard to follow integration tests now :(.
 - Caching in `Dockerfile` so, it'll take less time at deployment.
-- I'd add `health-check` route, configure `environment` and deploy this to `GCP Cloud Run` using GitHub Actions.
