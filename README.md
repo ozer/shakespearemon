@@ -24,9 +24,14 @@ It includes unit and integration tests using [wiremock-rs](https://github.com/Lu
 
 ## How to run?
 `using cargo`
-
 - ```cargo run```
-- To test the endpoint - ```curl --location --request GET 'http://localhost:8080/pokemon/pikachu'```
+
+`using Docker`
+- ```docker build -t shakespearemon .```
+- ```docker run -p 8080:8080 shakespearemon```
+
+`Testing the endpoint`
+- ```curl --location --request GET 'http://localhost:8080/pokemon/pikachu'```
 
 ## How to run tests?
 - ```cargo test```
@@ -39,3 +44,5 @@ It includes unit and integration tests using [wiremock-rs](https://github.com/Lu
 - After resolving that, I'll continue with the below.
 - Organizing the code better in modularized way.
 - Moving all the integration tests in `main.src` into `tests` folder, as it is too hard to follow integration tests now :(.
+- Caching in `Dockerfile` so, it'll take less time at deployment.
+- I'd add `health-check` route, configure `environment` and deploy this to `GCP Cloud Run` using GitHub Actions.

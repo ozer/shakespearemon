@@ -1,5 +1,5 @@
 [application]
-host = "127.0.0.1"
+host = "0.0.0.0"
 port = 8080
 poke_api_base_url = "https://pokeapi.co/api/v2/pokemon"
 shakespeare_translator_api_base_url = "https://api.funtranslations.com/translate/shakespeare.json"
