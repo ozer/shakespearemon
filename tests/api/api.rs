@@ -6,35 +6,18 @@ use surf::StatusCode as SurfStatusCode;
 use wiremock::{Mock, MockServer, ResponseTemplate};
 use wiremock::matchers::{method, path};
 
-use shakespearemon::poke::poke_species_response::{PokeSpeciesResponse, TextFlavorEntry};
-use shakespearemon::settings::{Application, Settings};
+use shakespearemon::settings::Settings;
 use shakespearemon::shakespeare::shakespeare_translation_response::ShakespeareTranslationResponse;
 use shakespearemon::translation_service::ShakespearemonResponse;
 use shakespearemon::translation_service::translate_pokemon_description_by_shakespeare;
 
-#[derive(Serialize)]
-struct UndefinedResponse {
-    message: String
-}
-
-fn generate_poke_species_response(language_name: String) -> PokeSpeciesResponse {
-    let flavor_text = "Flavor text".to_owned();
-    let flavor_text = vec![TextFlavorEntry::new(flavor_text, language_name)];
-    let id = 16;
-    let name = "pikachu".to_owned();
-    PokeSpeciesResponse::new(id, name, flavor_text)
-}
+use crate::helpers::{generate_poke_species_response, get_application, UndefinedResponse};
 
 #[actix_rt::test]
 async fn returns_500_if_poke_api_returns_undefined_response() {
     let mock_server = MockServer::start().await;
 
-    let application = Application {
-        host: "127.0.0.1".to_owned(),
-        port: 8080,
-        poke_api_base_url: mock_server.uri(),
-        shakespeare_translator_api_base_url: mock_server.uri(),
-    };
+    let application = get_application(mock_server.uri());
 
     let response = UndefinedResponse {
         message: "message".to_owned()
@@ -63,12 +46,7 @@ async fn returns_500_if_poke_api_returns_undefined_response() {
 async fn returns_404_pokemon_named_not_found() {
     let mock_server = MockServer::start().await;
 
-    let application = Application {
-        host: "127.0.0.1".to_owned(),
-        port: 8080,
-        poke_api_base_url: mock_server.uri(),
-        shakespeare_translator_api_base_url: mock_server.uri(),
-    };
+    let application = get_application(mock_server.uri());
 
     Mock::given(method("GET"))
         .and(path("/ozer"))
@@ -93,12 +71,7 @@ async fn returns_404_pokemon_named_not_found() {
 async fn returns_500_if_poke_api_sends_too_many_requests() {
     let mock_server = MockServer::start().await;
 
-    let application = Application {
-        host: "127.0.0.1".to_owned(),
-        port: 8080,
-        poke_api_base_url: mock_server.uri(),
-        shakespeare_translator_api_base_url: mock_server.uri(),
-    };
+    let application = get_application(mock_server.uri());
 
     Mock::given(method("GET"))
         .and(path("/ozer"))
@@ -123,12 +96,7 @@ async fn returns_500_if_poke_api_sends_too_many_requests() {
 async fn returns_500_if_shakespeare_translator_api_returns_undefined_response() {
     let mock_server = MockServer::start().await;
 
-    let application = Application {
-        host: "127.0.0.1".to_owned(),
-        port: 8080,
-        poke_api_base_url: mock_server.uri(),
-        shakespeare_translator_api_base_url: mock_server.uri(),
-    };
+    let application = get_application(mock_server.uri());
 
     Mock::given(method("GET"))
         .and(path("/ozer"))
@@ -162,12 +130,7 @@ async fn returns_500_if_shakespeare_translator_api_returns_undefined_response() 
 async fn returns_500_if_shakespeare_translator_api_returns_too_many_requests() {
     let mock_server = MockServer::start().await;
 
-    let application = Application {
-        host: "127.0.0.1".to_owned(),
-        port: 8080,
-        poke_api_base_url: mock_server.uri(),
-        shakespeare_translator_api_base_url: mock_server.uri(),
-    };
+    let application = get_application(mock_server.uri());
 
     Mock::given(method("GET"))
         .and(path("/ozer"))
@@ -197,12 +160,7 @@ async fn returns_500_if_shakespeare_translator_api_returns_too_many_requests() {
 async fn gets_translation_of_pokemon_by_shakespeare() {
     let mock_server = MockServer::start().await;
 
-    let application = Application {
-        host: "127.0.0.1".to_owned(),
-        port: 8080,
-        poke_api_base_url: mock_server.uri(),
-        shakespeare_translator_api_base_url: mock_server.uri(),
-    };
+    let application = get_application(mock_server.uri());
 
     let poke_description_response = generate_poke_species_response("en".to_owned());
 
