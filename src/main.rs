@@ -26,6 +26,7 @@ impl error::ResponseError for ShakespearemonException {
         match *self {
             ShakespearemonException::PokeClientException(PokeClientException::PokeClientWentWrong) => StatusCode::INTERNAL_SERVER_ERROR,
             ShakespearemonException::PokeClientException(PokeClientException::PokemonNotFound) => StatusCode::NOT_FOUND,
+            ShakespearemonException::PokeClientException(PokeClientException::PokemonDescriptionNotFound) => StatusCode::NOT_FOUND,
             ShakespearemonException::ShakespeareClientException(ShakespeareClientException::TranslationNotFound) => StatusCode::NOT_FOUND,
             ShakespearemonException::ShakespeareClientException(ShakespeareClientException::ShakespeareClientWentWrong) => StatusCode::INTERNAL_SERVER_ERROR,
         }
@@ -46,12 +47,12 @@ pub struct ShakespearemonResponse {
 
 #[get("/pokemon/{name}")]
 async fn translation_pokemon_shakespearen(data: web::Data<Settings>, web::Path(name): web::Path<String>) -> Result<HttpResponse, ShakespearemonException> {
-    poke::poke_client::get_pokemon(&data.application.poke_api_base_url, &name).await
+    let pokemon_description = poke::poke_client::get_pokemon_description(&data.application.poke_api_base_url, &name).await
         .map_err(|error| {
             ShakespearemonException::PokeClientException(error)
         })?;
 
-    let translation = shakespeare::shakespeare_client::get_shakespearean_translation(&data.application.shakespeare_translator_api_base_url, &name).await
+    let translation = shakespeare::shakespeare_client::get_shakespearean_translation(&data.application.shakespeare_translator_api_base_url, &pokemon_description).await
         .map_err(|error| {
             ShakespearemonException::ShakespeareClientException(error)
         })?;
@@ -92,10 +93,53 @@ mod tests {
     use surf::{StatusCode as SurfStatusCode};
     use serde::Serialize;
     use crate::shakespeare::shakespeare_translation_response::ShakespeareTranslationResponse;
+    use crate::poke::poke_species_response::{PokeSpeciesResponse, TextFlavorEntry};
 
     #[derive(Serialize)]
-    struct UndefinedShakespeareTranslatorApiResponse {
+    struct UndefinedResponse {
         message: String
+    }
+
+    fn generate_poke_species_response(language_name: String) -> PokeSpeciesResponse {
+        let flavor_text = "Flavor text".to_owned();
+        let flavor_text = vec![TextFlavorEntry::new(flavor_text, language_name)];
+        let id = 16;
+        let name = "pikachu".to_owned();
+        PokeSpeciesResponse::new(id, name, flavor_text)
+    }
+
+    #[actix_rt::test]
+    async fn returns_500_if_poke_api_returns_undefined_response() {
+        let mock_server = MockServer::start().await;
+
+        let application = Application {
+            host: "127.0.0.1".to_owned(),
+            port: 8080,
+            poke_api_base_url: mock_server.uri(),
+            shakespeare_translator_api_base_url: mock_server.uri(),
+        };
+
+        let response = UndefinedResponse {
+            message: "message".to_owned()
+        };
+
+        Mock::given(method("GET"))
+            .and(path("/ozer"))
+            .respond_with(ResponseTemplate::new(SurfStatusCode::Ok).set_body_json(response))
+            .mount(&mock_server)
+            .await;
+
+        let mut app = test::init_service(App::new()
+            .data(Settings {
+                application
+            })
+            .service(translation_pokemon_shakespearen)).await;
+
+        let req = test::TestRequest::get()
+            .uri("/pokemon/ozer").to_request();
+
+        let resp = test::call_service(&mut app, req).await;
+        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
     }
 
     #[actix_rt::test]
@@ -159,7 +203,7 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn returns_404_if_shakespeare_translator_api_returns_undefined_response() {
+    async fn returns_500_if_shakespeare_translator_api_returns_undefined_response() {
         let mock_server = MockServer::start().await;
 
         let application = Application {
@@ -175,7 +219,7 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let undefined_response = UndefinedShakespeareTranslatorApiResponse {
+        let undefined_response = UndefinedResponse {
             message: "undefined".to_owned()
         };
 
@@ -194,7 +238,7 @@ mod tests {
             .uri("/pokemon/ozer").to_request();
 
         let resp = test::call_service(&mut app, req).await;
-        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
     }
 
     #[actix_rt::test]
@@ -243,9 +287,11 @@ mod tests {
             shakespeare_translator_api_base_url: mock_server.uri(),
         };
 
+        let poke_description_response = generate_poke_species_response("en".to_owned());
+
         Mock::given(method("GET"))
             .and(path("/pikachu"))
-            .respond_with(ResponseTemplate::new(SurfStatusCode::Ok))
+            .respond_with(ResponseTemplate::new(SurfStatusCode::Ok).set_body_json(poke_description_response))
             .mount(&mock_server)
             .await;
 

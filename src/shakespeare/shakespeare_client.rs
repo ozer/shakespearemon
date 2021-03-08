@@ -20,7 +20,7 @@ pub async fn get_shakespearean_translation(url: &str, text: &str) -> Result<Stri
     match res.status() {
         StatusCode::Ok => {
             let translation: ShakespeareTranslationResponse = res.body_json().await.map_err(|_| {
-                ShakespeareClientException::TranslationNotFound
+                ShakespeareClientException::ShakespeareClientWentWrong
             })?;
             Ok(translation.contents.translated)
         },
