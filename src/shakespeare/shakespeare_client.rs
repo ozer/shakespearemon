@@ -1,8 +1,8 @@
 use surf::{post, StatusCode};
 
 use crate::shakespeare::shakespeare_client_exception::ShakespeareClientException;
-use crate::shakespeare::shakespeare_translation_response::ShakespeareTranslationResponse;
 use crate::shakespeare::shakespeare_translation_request::ShakespeareTranslationRequest;
+use crate::shakespeare::shakespeare_translation_response::ShakespeareTranslationResponse;
 
 pub async fn get_shakespearean_translation(url: &str, text: &str) -> Result<String, ShakespeareClientException> {
     let body = surf::Body::from_json(&ShakespeareTranslationRequest {
@@ -23,7 +23,7 @@ pub async fn get_shakespearean_translation(url: &str, text: &str) -> Result<Stri
                 ShakespeareClientException::ShakespeareClientWentWrong
             })?;
             Ok(translation.contents.translated)
-        },
+        }
         StatusCode::NotFound => {
             Err(ShakespeareClientException::TranslationNotFound)
         }
@@ -34,9 +34,10 @@ pub async fn get_shakespearean_translation(url: &str, text: &str) -> Result<Stri
 #[cfg(test)]
 #[allow(unused_imports)]
 mod tests {
-    use super::*;
-    use wiremock::{MockServer, Mock, ResponseTemplate};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
     use wiremock::matchers::{method, path, path_regex};
+
+    use super::*;
 
     #[actix_rt::test]
     #[allow(unused_must_use)]

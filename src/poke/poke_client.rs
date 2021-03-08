@@ -50,12 +50,14 @@ fn extract_english_flavor_text_from_poke_species_response(response: PokeSpeciesR
 #[cfg(test)]
 #[allow(unused_imports)]
 mod tests {
-    use super::*;
-    use wiremock::{MockServer, Mock, ResponseTemplate};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
     use wiremock::matchers::{method, path, path_regex};
-    use crate::poke::poke_species_response::{TextFlavorEntryLanguage, TextFlavorEntry};
 
-    fn generate_poke_species_response (language_name: String) -> PokeSpeciesResponse {
+    use crate::poke::poke_species_response::{TextFlavorEntry, TextFlavorEntryLanguage};
+
+    use super::*;
+
+    fn generate_poke_species_response(language_name: String) -> PokeSpeciesResponse {
         let flavor_text = "Flavor text".to_owned();
         let flavor_text = vec![TextFlavorEntry::new(flavor_text, language_name)];
         let id = 16;
@@ -118,7 +120,7 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn returns_pokemon_name() {
+    async fn should_return_pokemon_description() {
         let mock_server = MockServer::start().await;
 
         let language_name = "en".to_owned();

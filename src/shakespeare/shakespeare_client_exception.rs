@@ -1,5 +1,5 @@
 use derive_more::{Display, Error};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Display, Error, PartialEq, Serialize, Deserialize)]
 pub enum ShakespeareClientException {

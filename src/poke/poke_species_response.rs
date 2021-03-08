@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct TextFlavorEntryLanguage {
@@ -20,13 +20,13 @@ pub struct PokeSpeciesResponse {
 
 impl TextFlavorEntry {
     #[allow(dead_code)]
-    pub fn new (flavor_text: String, language_name: String) -> Self {
+    pub fn new(flavor_text: String, language_name: String) -> Self {
         let language = TextFlavorEntryLanguage {
             name: language_name
         };
         TextFlavorEntry {
             flavor_text,
-            language
+            language,
         }
     }
 }
