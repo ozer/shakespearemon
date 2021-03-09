@@ -85,7 +85,7 @@ mod tests {
 
     #[actix_rt::test]
     #[allow(unused_must_use)]
-    async fn throw_pokemon_not_found_error() {
+    async fn should_throw_pokemon_not_found_error() {
         let mock_server = MockServer::start().await;
 
         Mock::given(method("GET"))

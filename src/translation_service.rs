@@ -1,5 +1,8 @@
-use actix_web::{error, get, HttpResponse, web};
+extern crate derive_more;
+
+use actix_web::{get, HttpResponse, web};
 use actix_web::dev::HttpResponseBuilder;
+use actix_web::error::ResponseError;
 use actix_web::http::{header, StatusCode};
 use derive_more::{Display, Error};
 use serde::{Deserialize, Serialize};
@@ -9,13 +12,13 @@ use crate::poke::poke_client_exception::PokeClientException;
 use crate::settings::Settings;
 use crate::shakespeare::shakespeare_client_exception::ShakespeareClientException;
 
-#[derive(Debug, Display, Error, Serialize, Deserialize)]
+#[derive(Debug, Error, Serialize, Deserialize, Display)]
 pub enum ShakespearemonException {
     PokeClientException(PokeClientException),
     ShakespeareClientException(ShakespeareClientException),
 }
 
-impl error::ResponseError for ShakespearemonException {
+impl ResponseError for ShakespearemonException {
     fn status_code(&self) -> StatusCode {
         match *self {
             ShakespearemonException::PokeClientException(PokeClientException::PokeClientWentWrong) => StatusCode::INTERNAL_SERVER_ERROR,

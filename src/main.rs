@@ -1,3 +1,5 @@
+extern crate log;
+
 use std::io::{Error, ErrorKind};
 
 use actix_web::{App, HttpServer};
@@ -13,6 +15,9 @@ mod translation_service;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    std::env::set_var("RUST_LOG", "actix_web=info");
+    env_logger::init();
+
     let settings = Settings::new().map_err(|error| {
         Error::new(ErrorKind::Other, format!("Config failed with an error: {:?}", error))
     })?;

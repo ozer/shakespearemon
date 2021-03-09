@@ -44,3 +44,4 @@ and integration tests using [wiremock-rs](https://github.com/LukeMathWalker/wire
 
 ## Future Work
 - Caching in `Dockerfile` so, it'll take less time at deployment.
+- Cannot deserialize returning exceptions in integration tests to check against so, tests work by status codes.
